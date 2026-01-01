@@ -4,23 +4,26 @@
     <title>PANDA 🐼 | Dwarka AI</title>
 </head>
 <body>
-    <h2>🐼 PANDA – Your AI Study Buddy</h2>
 
-    <form method="POST">
-        <input type="text" name="message" placeholder="Ask anything OR type PDF name" required>
-        <button type="submit">Send</button>
-    </form>
+<h2>🐼 PANDA – Your AI Study Buddy</h2>
 
-    <hr>
+<form method="POST">
+    <input type="text" name="message" placeholder="Ask anything or type PDF name" required>
+    <button type="submit">Send</button>
+</form>
 
-    {% if msg.role == "user" %}
-<p><b>You:</b> {{ msg.content }}</p>
+<hr>
+
+{% if chat and chat|length > 0 %}
+    {% for msg in chat %}
+        <p><b>Panda 🐼:</b> {{ msg.content }}</p>
+    {% endfor %}
 {% else %}
-<p><b>Panda 🐼:</b> {{ msg.content }}</p>
+    <p><i>Start chatting with Panda 🐼</i></p>
 {% endif %}
 
+<br>
+<a href="/logout">Logout</a>
 
-    <br>
-    <a href="/logout">Logout</a>
 </body>
 </html>
