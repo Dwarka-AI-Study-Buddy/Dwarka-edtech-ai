@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PANDA 🐼 | Dwarka AI</title>
+</head>
+<body>
+    <h2>🐼 PANDA – Your AI Study Buddy</h2>
+
+    <form method="POST">
+        <input type="text" name="message" placeholder="Ask anything OR type PDF name" required>
+        <button type="submit">Send</button>
+    </form>
+
+    <hr>
+
+    {% for msg in chat %}
+        <p><b>{{ msg.role }}:</b> {{ msg.content }}</p>
+    {% endfor %}
+
+    <br>
+    <a href="/logout">Logout</a>
+</body>
+</html>
