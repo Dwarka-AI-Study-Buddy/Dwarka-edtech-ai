@@ -3,7 +3,7 @@ import openai
 import os
 
 app = Flask(__name__)
-app.secret_key = ""SECRET_KEY", "dwarka-ai-secret-123""
+app.secret_key = "dwarka-ai-secret-123"
 
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -103,6 +103,7 @@ def logout():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
