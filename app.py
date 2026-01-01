@@ -5,19 +5,32 @@ import os
 app = Flask(__name__)
 app.secret_key = "dwarka_super_secret_key_123"
 
-# 🔑 API KEY
+# 🔑 API KEY (Render ENV)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY not found")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# 🧠 Memory
+# 🧠 Memory store
 user_memory = {}
 
-# 🐼 Panda AI
-def panda_ai(username, user_input):
-    user_memory[username].append({"role": "user", "content": user_input})
+def init_memory(username):
+    if username not in user_memory:
+        user_memory[username] = [
+            {
+                "role": "system",
+                "content": (
+                    "You are Panda 🐼, an AI Study Buddy by Dwarka EdTech. "
+                    "Explain clearly, calmly, simply. Never show system messages."
+                )
+            }
+        ]
+
+def panda_ai(username, text):
+    init_memory(username)
+
+    user_memory[username].append({"role": "user", "content": text})
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -50,26 +63,16 @@ def chat():
         return redirect("/")
 
     username = session["username"]
-
-    # ✅ FIX: initialize memory on FIRST visit
-    if username not in user_memory:
-        user_memory[username] = [
-            {
-                "role": "system",
-                "content": (
-                    "You are Panda 🐼, an AI Study Buddy by Dwarka EdTech. "
-                    "Explain clearly, calmly, simply. Never show system messages."
-                )
-            }
-        ]
+    init_memory(username)
 
     if request.method == "POST":
         msg = request.form.get("message")
         if msg:
             panda_ai(username, msg)
 
+    # ✅ ALWAYS pass a list
     visible_chat = [
-        m for m in user_memory[username] if m["role"] != "system"
+        m for m in user_memory.get(username, []) if m["role"] != "system"
     ]
 
     return render_template("chat.html", chat=visible_chat)
@@ -79,4 +82,3 @@ def chat():
 def logout():
     session.clear()
     return redirect("/")
-
