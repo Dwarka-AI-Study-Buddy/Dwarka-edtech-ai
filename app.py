@@ -1,11 +1,17 @@
 from flask import Flask, render_template, request, redirect, session
-from openai import OpenAI
+import openai
 import os
 
 app = Flask(__name__)
-app.secret_key = "dwarka_secret_key"
+app.secret_key = ""SECRET_KEY", "dwarka-ai-secret-123""
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+
+if not OPENAI_KEY:
+    print("⚠️ OPENAI_API_KEY not found")
+else:
+    openai.api_key = OPENAI_KEY
+
 
 # 🧠 Memory per user
 user_memory = {}
@@ -95,5 +101,8 @@ def logout():
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+
 
