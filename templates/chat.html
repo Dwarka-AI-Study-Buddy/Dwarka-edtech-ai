@@ -13,9 +13,12 @@
 
     <hr>
 
-    {% for msg in chat %}
-        <p><b>{{ msg.role }}:</b> {{ msg.content }}</p>
-    {% endfor %}
+    {% if msg.role == "user" %}
+<p><b>You:</b> {{ msg.content }}</p>
+{% else %}
+<p><b>Panda 🐼:</b> {{ msg.content }}</p>
+{% endif %}
+
 
     <br>
     <a href="/logout">Logout</a>
