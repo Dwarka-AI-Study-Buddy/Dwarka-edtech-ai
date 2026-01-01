@@ -5,8 +5,7 @@ import os
 app = Flask(__name__)
 app.secret_key = "dwarka-ai-secret-123"
 
-OPENAI_KEY = os.getenv("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")
-
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_KEY:
     print("⚠️ OPENAI_API_KEY not found")
 else:
@@ -103,6 +102,7 @@ def logout():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
