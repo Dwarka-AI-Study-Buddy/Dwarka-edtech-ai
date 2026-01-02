@@ -44,23 +44,41 @@ def panda_ai(username, text):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        session["username"] = request.form["username"]
-        return redirect("/chat")
+        username = request.form["username"]
+        password = request.form["password"]
+
+        with open("users.txt", "r") as f:
+            users = f.readlines()
+
+        for user in users:
+            u, p = user.strip().split("|")
+            if u == username and p == password:
+                session["username"] = username
+                return redirect("/chat")
+
+        return render_template("login.html", error="Invalid credentials")
+
     return render_template("login.html")
 
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        session["username"] = request.form["username"]
-        return redirect("/chat")
-    return render_template("signup.html")
+        username = request.form["username"]
+        password = request.form["password"]
 
+        with open("users.txt", "a") as f:
+            f.write(f"{username}|{password}\n")
+
+        return redirect("/")  # 👈 BACK TO LOGIN
+
+    return render_template("signup.html")
 
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
+    # 🔒 Protect chat
     if "username" not in session:
-        return redirect("/")
+        return redirect("/login")
 
     username = session["username"]
     init_memory(username)
@@ -70,15 +88,17 @@ def chat():
         if msg:
             panda_ai(username, msg)
 
-    # ✅ ALWAYS pass a list
     visible_chat = [
-        m for m in user_memory.get(username, []) if m["role"] != "system"
+        m for m in user_memory.get(username, [])
+        if m["role"] != "system"
     ]
 
     return render_template("chat.html", chat=visible_chat)
+
 
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
