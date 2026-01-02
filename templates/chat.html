@@ -14,13 +14,13 @@
 
 <hr>
 
-{% if chat and chat|length > 0 %}
-    {% for msg in chat %}
+{% for msg in chat %}
+    {% if msg.role == "user" %}
+        <p><b>You:</b> {{ msg.content }}</p>
+    {% else %}
         <p><b>Panda 🐼:</b> {{ msg.content }}</p>
-    {% endfor %}
-{% else %}
-    <p><i>Start chatting with Panda 🐼</i></p>
-{% endif %}
+    {% endif %}
+{% endfor %}
 
 <br>
 <a href="/logout">Logout</a>
