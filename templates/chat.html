@@ -1,29 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PANDA 🐼 | Dwarka AI</title>
+    <title>Panda AI Chat</title>
 </head>
 <body>
+    <h2>🐼 Panda AI – Dwarka Study Buddy</h2>
 
-<h2>🐼 PANDA – Your AI Study Buddy</h2>
+    <form method="POST">
+        <input type="text" name="message" placeholder="Ask Panda anything..." required>
+        <button type="submit">Send</button>
+    </form>
 
-<form method="POST">
-    <input type="text" name="message" placeholder="Ask anything or type PDF name" required>
-    <button type="submit">Send</button>
-</form>
+    <hr>
 
-<hr>
+    {% for msg in chat %}
+        {% if msg.role == "user" %}
+            <p><b>You:</b> {{ msg.content }}</p>
+        {% else %}
+            <p><b>Panda 🐼:</b> {{ msg.content }}</p>
+        {% endif %}
+    {% endfor %}
 
-{% for msg in chat %}
-    {% if msg.role == "user" %}
-        <p><b>You:</b> {{ msg.content }}</p>
-    {% else %}
-        <p><b>Panda 🐼:</b> {{ msg.content }}</p>
-    {% endif %}
-{% endfor %}
-
-<br>
-<a href="/logout">Logout</a>
-
+    <br>
+    <a href="/logout">Logout</a>
 </body>
 </html>
+
