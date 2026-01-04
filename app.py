@@ -17,7 +17,7 @@ if not os.path.exists(CHAT_DIR):
 def load_users():
     users = {}
     if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, "r") as f:
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 if "|" in line:
                     u, p = line.strip().split("|", 1)
@@ -25,12 +25,13 @@ def load_users():
     return users
 
 def save_user(username, password):
-    with open(USERS_FILE, "a") as f:
+    with open(USERS_FILE, "a", encoding="utf-8") as f:
         f.write(f"{username}|{password}\n")
 
 # ---------- CHAT HELPERS ----------
 def chat_file(username):
-    return os.path.join(CHAT_DIR, f"{username}.txt")
+    safe_user = username.replace("/", "").replace("\\", "")
+    return os.path.join(CHAT_DIR, f"{safe_user}.txt")
 
 def load_chat(username):
     messages = []
@@ -38,8 +39,9 @@ def load_chat(username):
     if os.path.exists(file):
         with open(file, "r", encoding="utf-8") as f:
             for line in f:
-                role, content = line.strip().split("|", 1)
-                messages.append({"role": role, "content": content})
+                if "|" in line:
+                    role, content = line.strip().split("|", 1)
+                    messages.append({"role": role, "content": content})
     return messages
 
 def save_message(username, role, content):
@@ -85,12 +87,11 @@ def chat():
         return redirect("/")
 
     username = session["username"]
-    chat_history = load_chat(username)
 
     if request.method == "POST":
         msg = request.form.get("message")
         if msg:
-            save_message(username, "user", msg)
+            chat_history = load_chat(username)
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -103,6 +104,8 @@ def chat():
             )
 
             reply = response.choices[0].message.content
+
+            save_message(username, "user", msg)
             save_message(username, "assistant", reply)
 
         return redirect("/chat")
@@ -127,4 +130,4 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
