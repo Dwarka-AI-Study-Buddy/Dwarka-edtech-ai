@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 import os
 from openai import OpenAI
 
-# ---------------- APP CONFIG ----------------
+# ---------------- BASIC CONFIG ----------------
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dwarka-secret-key")
 
@@ -52,8 +52,8 @@ def save_message(username, role, content):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
         users = load_users()
         if username in users and users[username] == password:
@@ -68,8 +68,8 @@ def login():
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
         users = load_users()
         if username in users:
@@ -95,29 +95,47 @@ def chat():
         if msg:
             save_message(username, "user", msg)
 
-            messages = [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are Panda 🐼, an AI Study Buddy. "
-                        "Always give COMPLETE, DETAILED answers in ONE reply. "
-                        "Never reply with filler sentences like "
-                        "'Sure', 'Absolutely', or 'Let me explain'."
-                    )
-                }
-            ] + chat_history + [{"role": "user", "content": msg}]
+            system_prompt = """
+You are Panda 🐼, an AI Study Buddy for Indian students.
 
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
-                max_tokens=500
-            )
+Rules:
+- Explain concepts in simple language
+- Explain step-by-step like a good teacher
+- Use examples
+- Be exam-oriented when helpful
+- Never reply with filler like "Sure" or "Absolutely"
+- Give full answers in ONE reply
+- End long answers by asking what the student wants next
 
-            reply = response.choices[0].message.content.strip()
+Tone: friendly, calm, motivating
+"""
 
-            # Save only meaningful replies
-            if len(reply) > 30:
-                save_message(username, "assistant", reply)
+            messages = [{"role": "system", "content": system_prompt}]
+
+            # Add last 10 messages only (safe memory)
+            for m in chat_history[-10:]:
+                messages.append(m)
+
+            messages.append({"role": "user", "content": msg})
+
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    max_tokens=500
+                )
+
+                reply = response.choices[0].message.content.strip()
+
+                if len(reply) > 30:
+                    save_message(username, "assistant", reply)
+
+            except Exception:
+                save_message(
+                    username,
+                    "assistant",
+                    "🐼 Panda is a little tired right now. Please try again in a moment."
+                )
 
         return redirect("/chat")
 
