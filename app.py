@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 import os
 from openai import OpenAI
 
+# ---------------- APP CONFIG ----------------
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dwarka-secret-key")
 
@@ -13,11 +14,11 @@ CHAT_DIR = "chats"
 if not os.path.exists(CHAT_DIR):
     os.mkdir(CHAT_DIR)
 
-# ---------- USER HELPERS ----------
+# ---------------- USER HELPERS ----------------
 def load_users():
     users = {}
     if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
+        with open(USERS_FILE, "r") as f:
             for line in f:
                 if "|" in line:
                     u, p = line.strip().split("|", 1)
@@ -25,13 +26,12 @@ def load_users():
     return users
 
 def save_user(username, password):
-    with open(USERS_FILE, "a", encoding="utf-8") as f:
+    with open(USERS_FILE, "a") as f:
         f.write(f"{username}|{password}\n")
 
-# ---------- CHAT HELPERS ----------
+# ---------------- CHAT HELPERS ----------------
 def chat_file(username):
-    safe_user = username.replace("/", "").replace("\\", "")
-    return os.path.join(CHAT_DIR, f"{safe_user}.txt")
+    return os.path.join(CHAT_DIR, f"{username}.txt")
 
 def load_chat(username):
     messages = []
@@ -48,7 +48,7 @@ def save_message(username, role, content):
     with open(chat_file(username), "a", encoding="utf-8") as f:
         f.write(f"{role}|{content}\n")
 
-# ---------- ROUTES ----------
+# ---------------- ROUTES ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -60,7 +60,7 @@ def login():
             session["username"] = username
             return redirect("/chat")
 
-        return render_template("login.html", error="Invalid credentials")
+        return render_template("login.html", error="Invalid username or password")
 
     return render_template("login.html")
 
@@ -87,32 +87,37 @@ def chat():
         return redirect("/")
 
     username = session["username"]
+    chat_history = load_chat(username)
 
     if request.method == "POST":
-        msg = request.form.get("message")
+        msg = request.form.get("message", "").strip()
+
         if msg:
-            chat_history = load_chat(username)
+            save_message(username, "user", msg)
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are Panda 🐼, an AI Study Buddy. "
+                        "Always give COMPLETE, DETAILED answers in ONE reply. "
+                        "Never reply with filler sentences like "
+                        "'Sure', 'Absolutely', or 'Let me explain'."
+                    )
+                }
+            ] + chat_history + [{"role": "user", "content": msg}]
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": 
-"You are Panda 🐼, an AI Study Buddy. Always give FULL, COMPLETE answers. "
-"Never reply with filler sentences like 'Sure', 'Absolutely', or 'Let me explain'. "
-"If the user asks for details, immediately give the detailed explanation in the same message."
-}
-,
-                    *chat_history,
-                    {"role": "user", "content": msg}
-                ],
-                max_tokens=300
+                messages=messages,
+                max_tokens=500
             )
 
             reply = response.choices[0].message.content.strip()
 
-if len(reply) > 30:  # avoid filler replies
-    save_message(username, "assistant", reply)
-
+            # Save only meaningful replies
+            if len(reply) > 30:
+                save_message(username, "assistant", reply)
 
         return redirect("/chat")
 
@@ -135,6 +140,6 @@ def logout():
     return redirect("/")
 
 
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
-
