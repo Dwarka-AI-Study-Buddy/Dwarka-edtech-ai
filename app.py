@@ -96,17 +96,23 @@ def chat():
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are Panda 🐼, a friendly AI Study Buddy."},
+                    {"role": "system", "content": 
+"You are Panda 🐼, an AI Study Buddy. Always give FULL, COMPLETE answers. "
+"Never reply with filler sentences like 'Sure', 'Absolutely', or 'Let me explain'. "
+"If the user asks for details, immediately give the detailed explanation in the same message."
+}
+,
                     *chat_history,
                     {"role": "user", "content": msg}
                 ],
                 max_tokens=300
             )
 
-            reply = response.choices[0].message.content
+            reply = response.choices[0].message.content.strip()
 
-            save_message(username, "user", msg)
-            save_message(username, "assistant", reply)
+if len(reply) > 30:  # avoid filler replies
+    save_message(username, "assistant", reply)
+
 
         return redirect("/chat")
 
@@ -131,3 +137,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
