@@ -1,21 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Signup | Dwarka AI</title>
+<title>Signup | Dwarka AI</title>
+<style>
+body {
+    background: #f2f2f2;
+    font-family: Arial;
+}
+.box {
+    width: 300px;
+    margin: 100px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ccc;
+}
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+}
+button {
+    background: #128c7e;
+    color: white;
+    border: none;
+}
+</style>
 </head>
 <body>
-    <h2>Signup</h2>
 
-    {% if error %}
-        <p style="color:red">{{ error }}</p>
-    {% endif %}
-
+<div class="box">
+    <h2>Create Account</h2>
+    {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
     <form method="POST">
-        <input type="text" name="username" placeholder="Username" required><br><br>
-        <input type="password" name="password" placeholder="Password" required><br><br>
-        <button type="submit">Create Account</button>
+        <input name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button>Signup</button>
     </form>
+    <p>Already have account? <a href="/">Login</a></p>
+</div>
 
-    <p>Already have an account? <a href="/">Login</a></p>
 </body>
 </html>
