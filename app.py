@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, session
 import os
 from openai import OpenAI
 
-# ------------------ APP SETUP ------------------
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dwarka-secret-key")
 
@@ -14,7 +13,7 @@ CHAT_DIR = "chats"
 if not os.path.exists(CHAT_DIR):
     os.makedirs(CHAT_DIR)
 
-# ------------------ USER HELPERS ------------------
+# ---------------- USERS ----------------
 def load_users():
     users = {}
     if os.path.exists(USERS_FILE):
@@ -29,7 +28,7 @@ def save_user(username, password):
     with open(USERS_FILE, "a", encoding="utf-8") as f:
         f.write(f"{username}|{password}\n")
 
-# ------------------ CHAT HELPERS ------------------
+# ---------------- CHAT ----------------
 def chat_file(username):
     return os.path.join(CHAT_DIR, f"{username}.txt")
 
@@ -39,28 +38,27 @@ def load_chat(username):
     if os.path.exists(file):
         with open(file, "r", encoding="utf-8") as f:
             for line in f:
-                if "|" in line:
-                    role, content = line.strip().split("|", 1)
-                    messages.append({"role": role, "content": content})
+                role, content = line.strip().split("|", 1)
+                messages.append({"role": role, "content": content})
     return messages
 
 def save_message(username, role, content):
     with open(chat_file(username), "a", encoding="utf-8") as f:
         f.write(f"{role}|{content}\n")
 
-# ------------------ ROUTES ------------------
+# ---------------- ROUTES ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
         users = load_users()
-        if username in users and users[username] == password:
-            session["username"] = username
+        u = request.form.get("username")
+        p = request.form.get("password")
+
+        if u in users and users[u] == p:
+            session["username"] = u
             return redirect("/chat")
 
-        return render_template("login.html", error="Invalid username or password")
+        return render_template("login.html", error="Invalid credentials")
 
     return render_template("login.html")
 
@@ -68,14 +66,14 @@ def login():
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
         users = load_users()
-        if username in users:
+        u = request.form.get("username")
+        p = request.form.get("password")
+
+        if u in users:
             return render_template("signup.html", error="User already exists")
 
-        save_user(username, password)
+        save_user(u, p)
         return redirect("/")
 
     return render_template("signup.html")
@@ -87,7 +85,7 @@ def chat():
         return redirect("/")
 
     username = session["username"]
-    chat_history = load_chat(username)
+    history = load_chat(username)
 
     if request.method == "POST":
         user_msg = request.form.get("message")
@@ -95,27 +93,40 @@ def chat():
         if user_msg:
             save_message(username, "user", user_msg)
 
+            # 🔥 STRONG SYSTEM PROMPT (THIS FIXES EVERYTHING)
             system_prompt = """
-You are Panda 🐼, an AI Study Buddy and Teacher.
+You are Panda 🐼 – an expert teacher and study mentor.
 
-MANDATORY RULES:
-- Always give FULL answers, never stop at point 1
-- Explain step-by-step
-- Minimum 6–8 points for broad topics
-- Each point must have explanation
-- Simple English, beginner friendly
-- Exam + real-life focused
-- Do NOT ask follow-up questions
-- Do NOT give short answers
-- Start directly with explanation
+ABSOLUTE RULES (NO EXCEPTIONS):
+1. Always give COMPLETE explanations
+2. Minimum 8–12 numbered points for topics like:
+   - Product Management
+   - Career
+   - Exams
+   - Technology
+3. EACH point must have:
+   - Clear heading
+   - 3–4 line explanation
+   - Example if possible
+4. NEVER stop mid-answer
+5. NEVER say "Here is a breakdown" and stop
+6. NEVER ask follow-up questions
+7. Assume student is a beginner
+8. Explain like a real teacher in class
+
+Tone:
+• Friendly
+• Confident
+• Structured
+• Exam + practical focused
 
 Identity:
-You are Panda 🐼 – Dwarka Study Buddy.
+You are Panda 🐼 – Dwarka AI Study Buddy.
 """
 
             messages = [
                 {"role": "system", "content": system_prompt},
-                *chat_history[-10:],  # last 10 messages only
+                *history[-8:],   # keep memory short but effective
                 {"role": "user", "content": user_msg}
             ]
 
@@ -123,28 +134,27 @@ You are Panda 🐼 – Dwarka Study Buddy.
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=messages,
-                    max_tokens=700,
-                    temperature=0.6
+                    temperature=0.4,
+                    max_tokens=1000
                 )
 
                 reply = response.choices[0].message.content.strip()
                 save_message(username, "assistant", reply)
 
-            except Exception as e:
-                save_message(username, "assistant", "⚠️ Error generating response. Please try again.")
+            except Exception:
+                save_message(username, "assistant", "⚠️ Panda is tired. Please try again.")
 
         return redirect("/chat")
 
-    chat_history = load_chat(username)
-    return render_template("chat.html", chat=chat_history)
+    return render_template("chat.html", chat=load_chat(username))
 
 
 @app.route("/clear")
-def clear_chat():
+def clear():
     if "username" in session:
-        file = chat_file(session["username"])
-        if os.path.exists(file):
-            os.remove(file)
+        f = chat_file(session["username"])
+        if os.path.exists(f):
+            os.remove(f)
     return redirect("/chat")
 
 
@@ -154,6 +164,5 @@ def logout():
     return redirect("/")
 
 
-# ------------------ RUN ------------------
 if __name__ == "__main__":
     app.run(debug=True)
