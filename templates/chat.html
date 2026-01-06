@@ -1,142 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Panda 🐼 | Dwarka AI</title>
-
+<title>Panda AI</title>
 <style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #e5ddd5;
-    }
-
-    /* HEADER */
-    .header {
-        background: #075e54;
-        color: white;
-        padding: 15px;
-        font-size: 18px;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    /* CHAT AREA */
-    .chat-box {
-        max-width: 900px;
-        margin: auto;
-        padding: 15px;
-        height: calc(100vh - 140px);
-        overflow-y: auto;
-    }
-
-    /* MESSAGE BUBBLES */
-    .msg {
-        max-width: 70%;
-        padding: 10px 14px;
-        margin: 8px 0;
-        border-radius: 10px;
-        line-height: 1.4;
-        word-wrap: break-word;
-        font-size: 15px;
-    }
-
-    .user {
-        background: #dcf8c6;
-        margin-left: auto;
-        border-bottom-right-radius: 0;
-    }
-
-    .bot {
-        background: white;
-        margin-right: auto;
-        border-bottom-left-radius: 0;
-    }
-
-    /* INPUT AREA */
-    .input-area {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        background: #f0f0f0;
-        padding: 10px;
-        border-top: 1px solid #ccc;
-    }
-
-    .input-box {
-        max-width: 900px;
-        margin: auto;
-        display: flex;
-        gap: 10px;
-    }
-
-    input[type="text"] {
-        flex: 1;
-        padding: 12px;
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        outline: none;
-        font-size: 15px;
-    }
-
-    button {
-        background: #075e54;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 15px;
-    }
-
-    button:hover {
-        background: #128c7e;
-    }
-
-    .logout {
-        text-align: center;
-        margin-top: 5px;
-    }
-
-    .logout a {
-        color: #555;
-        text-decoration: none;
-        font-size: 13px;
-    }
+body{font-family:Arial;background:#e9e5dc;margin:0}
+.header{background:#0f5d52;color:white;padding:15px;text-align:center}
+.chat{padding:20px}
+.user{background:#dcf8c6;padding:10px;margin:10px 0;border-radius:10px;text-align:right}
+.bot{background:#fff;padding:10px;margin:10px 0;border-radius:10px}
+form{position:fixed;bottom:0;width:100%;background:#f0f0f0;padding:10px}
+input{width:80%;padding:10px;border-radius:20px;border:none}
+button{padding:10px 20px;border:none;background:#0f5d52;color:white;border-radius:20px}
+.footer{text-align:center;margin-top:5px}
 </style>
 </head>
-
 <body>
 
-<div class="header">
-    🐼 Panda AI – Dwarka Study Buddy
+<div class="header">🐼 Panda AI – Dwarka Study Buddy</div>
+
+<div class="chat">
+{% for msg in chat %}
+  {% if msg.role == "user" %}
+    <div class="user">{{msg.content}}</div>
+  {% else %}
+    <div class="bot">{{msg.content}}</div>
+  {% endif %}
+{% endfor %}
 </div>
 
-<div class="chat-box">
-    {% if chat %}
-        {% for msg in chat %}
-            {% if msg.role == "user" %}
-                <div class="msg user">{{ msg.content }}</div>
-            {% else %}
-                <div class="msg bot">{{ msg.content }}</div>
-            {% endif %}
-        {% endfor %}
-    {% else %}
-        <p style="text-align:center;color:#555;">Start chatting with Panda 🐼</p>
-    {% endif %}
+<form method="POST">
+<input name="message" placeholder="Type a message..." required>
+<button>Send</button>
+<div class="footer">
+<a href="/clear">Clear Chat</a> | <a href="/logout">Logout</a>
 </div>
-
-<div class="input-area">
-    <form method="POST" class="input-box">
-        <input type="text" name="message" placeholder="Type a message..." required>
-        <button type="submit">Send</button>
-    </form>
-    <div class="logout">
-    <a href="/clear">Clear Chat</a> |
-    <a href="/logout">Logout</a>
-</div>
-    </div>
-</div>
+</form>
 
 </body>
 </html>
