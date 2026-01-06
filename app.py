@@ -3,7 +3,7 @@ import os
 from openai import OpenAI
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dwarka-secret-key")
+app.secret_key = os.environ.get("SECRET_KEY", "dwarka-secret")
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -13,11 +13,11 @@ CHAT_DIR = "chats"
 if not os.path.exists(CHAT_DIR):
     os.makedirs(CHAT_DIR)
 
-# ---------------- USERS ----------------
+# ---------- USER HELPERS ----------
 def load_users():
     users = {}
     if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
+        with open(USERS_FILE, "r") as f:
             for line in f:
                 if "|" in line:
                     u, p = line.strip().split("|", 1)
@@ -25,10 +25,10 @@ def load_users():
     return users
 
 def save_user(username, password):
-    with open(USERS_FILE, "a", encoding="utf-8") as f:
+    with open(USERS_FILE, "a") as f:
         f.write(f"{username}|{password}\n")
 
-# ---------------- CHAT ----------------
+# ---------- CHAT HELPERS ----------
 def chat_file(username):
     return os.path.join(CHAT_DIR, f"{username}.txt")
 
@@ -46,19 +46,19 @@ def save_message(username, role, content):
     with open(chat_file(username), "a", encoding="utf-8") as f:
         f.write(f"{role}|{content}\n")
 
-# ---------------- ROUTES ----------------
+# ---------- ROUTES ----------
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        users = load_users()
-        u = request.form.get("username")
-        p = request.form.get("password")
+        username = request.form["username"]
+        password = request.form["password"]
 
-        if u in users and users[u] == p:
-            session["username"] = u
+        users = load_users()
+        if username in users and users[username] == password:
+            session["username"] = username
             return redirect("/chat")
 
-        return render_template("login.html", error="Invalid credentials")
+        return render_template("login.html", error="Invalid login")
 
     return render_template("login.html")
 
@@ -66,14 +66,14 @@ def login():
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        users = load_users()
-        u = request.form.get("username")
-        p = request.form.get("password")
+        username = request.form["username"]
+        password = request.form["password"]
 
-        if u in users:
+        users = load_users()
+        if username in users:
             return render_template("signup.html", error="User already exists")
 
-        save_user(u, p)
+        save_user(username, password)
         return redirect("/")
 
     return render_template("signup.html")
@@ -88,61 +88,38 @@ def chat():
     history = load_chat(username)
 
     if request.method == "POST":
-        user_msg = request.form.get("message")
+        msg = request.form.get("message")
+        if msg:
+            save_message(username, "user", msg)
 
-        if user_msg:
-            save_message(username, "user", user_msg)
-
-            # 🔥 STRONG SYSTEM PROMPT (THIS FIXES EVERYTHING)
-            system_prompt = """
-You are Panda 🐼 – an expert teacher and study mentor.
-
-ABSOLUTE RULES (NO EXCEPTIONS):
-1. Always give COMPLETE explanations
-2. Minimum 8–12 numbered points for topics like:
-   - Product Management
-   - Career
-   - Exams
-   - Technology
-3. EACH point must have:
-   - Clear heading
-   - 3–4 line explanation
-   - Example if possible
-4. NEVER stop mid-answer
-5. NEVER say "Here is a breakdown" and stop
-6. NEVER ask follow-up questions
-7. Assume student is a beginner
-8. Explain like a real teacher in class
-
-Tone:
-• Friendly
-• Confident
-• Structured
-• Exam + practical focused
-
-Identity:
-You are Panda 🐼 – Dwarka AI Study Buddy.
-"""
-
-            messages = [
-                {"role": "system", "content": system_prompt},
-                *history[-8:],   # keep memory short but effective
-                {"role": "user", "content": user_msg}
-            ]
+            system_prompt = (
+                "You are Panda 🐼, an expert teacher.\n"
+                "Explain topics deeply like a mentor.\n"
+                "Use numbered steps, examples, and clarity.\n"
+                "Never give short or vague answers."
+            )
 
             try:
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
-                    messages=messages,
-                    temperature=0.4,
-                    max_tokens=1000
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        *history[-6:],
+                        {"role": "user", "content": msg}
+                    ],
+                    max_tokens=900
                 )
 
-                reply = response.choices[0].message.content.strip()
+                reply = response.choices[0].message.content
                 save_message(username, "assistant", reply)
 
-            except Exception:
-                save_message(username, "assistant", "⚠️ Panda is tired. Please try again.")
+            except Exception as e:
+                print("OPENAI ERROR:", e)
+                save_message(
+                    username,
+                    "assistant",
+                    "⚠️ Panda is busy right now. Please try again."
+                )
 
         return redirect("/chat")
 
@@ -150,11 +127,11 @@ You are Panda 🐼 – Dwarka AI Study Buddy.
 
 
 @app.route("/clear")
-def clear():
+def clear_chat():
     if "username" in session:
-        f = chat_file(session["username"])
-        if os.path.exists(f):
-            os.remove(f)
+        file = chat_file(session["username"])
+        if os.path.exists(file):
+            os.remove(file)
     return redirect("/chat")
 
 
