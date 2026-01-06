@@ -1,40 +1,139 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Panda AI</title>
+<meta charset="UTF-8">
+<title>Panda AI – Dwarka</title>
+
 <style>
-body{font-family:Arial;background:#e9e5dc;margin:0}
-.header{background:#0f5d52;color:white;padding:15px;text-align:center}
-.chat{padding:20px}
-.user{background:#dcf8c6;padding:10px;margin:10px 0;border-radius:10px;text-align:right}
-.bot{background:#fff;padding:10px;margin:10px 0;border-radius:10px}
-form{position:fixed;bottom:0;width:100%;background:#f0f0f0;padding:10px}
-input{width:80%;padding:10px;border-radius:20px;border:none}
-button{padding:10px 20px;border:none;background:#0f5d52;color:white;border-radius:20px}
-.footer{text-align:center;margin-top:5px}
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #ece5dd;
+}
+
+/* HEADER */
+header {
+    background: #075e54;
+    color: white;
+    padding: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* CHAT AREA */
+.chat-box {
+    padding: 15px;
+    height: 75vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* MESSAGE BUBBLES */
+.msg {
+    max-width: 75%;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+/* USER MESSAGE */
+.user {
+    background: #dcf8c6;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+}
+
+/* PANDA MESSAGE */
+.bot {
+    background: #ffffff;
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+}
+
+/* INPUT AREA */
+form {
+    display: flex;
+    padding: 10px;
+    background: #f0f0f0;
+    border-top: 1px solid #ddd;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 15px;
+}
+
+button {
+    margin-left: 10px;
+    padding: 12px 18px;
+    border-radius: 50%;
+    border: none;
+    background: #075e54;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #064c46;
+}
+
+/* FOOTER */
+.footer {
+    text-align: center;
+    padding: 6px;
+    background: #f7f7f7;
+    font-size: 13px;
+}
+
+.footer a {
+    text-decoration: none;
+    color: #075e54;
+    margin: 0 8px;
+}
 </style>
 </head>
+
 <body>
 
-<div class="header">🐼 Panda AI – Dwarka Study Buddy</div>
+<header>
+🐼 Panda AI – Dwarka Study Buddy
+</header>
 
-<div class="chat">
-{% for msg in chat %}
-  {% if msg.role == "user" %}
-    <div class="user">{{msg.content}}</div>
-  {% else %}
-    <div class="bot">{{msg.content}}</div>
-  {% endif %}
-{% endfor %}
+<div class="chat-box" id="chatBox">
+    {% for msg in chat %}
+        <div class="msg {{ 'user' if msg.role == 'user' else 'bot' }}">
+            {{ msg.content }}
+        </div>
+    {% endfor %}
 </div>
 
 <form method="POST">
-<input name="message" placeholder="Type a message..." required>
-<button>Send</button>
-<div class="footer">
-<a href="/clear">Clear Chat</a> | <a href="/logout">Logout</a>
-</div>
+    <input type="text" name="message" placeholder="Ask Panda anything..." required autofocus>
+    <button type="submit">➤</button>
 </form>
+
+<div class="footer">
+    <a href="/clear">🗑 Clear Chat</a> |
+    <a href="/logout">🚪 Logout</a>
+</div>
+
+<script>
+    // Auto-scroll to latest message
+    const chatBox = document.getElementById("chatBox");
+    chatBox.scrollTop = chatBox.scrollHeight;
+</script>
 
 </body>
 </html>
